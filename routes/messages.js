@@ -10,9 +10,6 @@ async function post(req,res){
 }
 
 async function list (req, res){
-  if(!req.params.id){
-    throw new Error('id parameter is required')
-  }
   try {
     user = await chatController.getMessages(req);
     res.status(200).json({ data: user });

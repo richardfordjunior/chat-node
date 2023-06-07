@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/emojione/2.2.6/assets/css/emojione.min.css" />
 </head>
-
 <body>
   <header>
     <nav>
@@ -21,6 +20,8 @@
     <div class="row">
       <div class="col s12">
         <div class="card horizontal">
+          <div id="chat-messages" class="card-content" v-html="chatContent">
+
           </div>
         </div>
       </div>
@@ -48,9 +49,6 @@
       <div class="input-field col s8">
         <input type="text" v-model.trim="username" placeholder="Username">
       </div>
-      <li v-for="item in messages">
-        {{ item }}
-      </li>
       <div class="input-field col s4">
         <button class="waves-effect waves-light btn" @click="join">
           <i class="material-icons right">done</i>
@@ -58,27 +56,10 @@
         </button>
       </div>
     </div>
-    <div>
-      <!-- <v-data-table hide-actions flat :items="messages" :items-per-page="5">
-        <template v-slot:body="{ items }">
-          <tbody>
-            <tr v-for="item in items" :key="item.id">
-              <td>{{ item }}</td>
-            </tr>
-          </tbody>
-        </template>
-        <template v-slot:no-results>
-          <h6 class="grey--text">No data available</h6>
-        </template>
-      </v-data-table> -->
   </div>
   </main>
   <footer class="page-footer">
   </footer>
-
-  <div>
-
-  </div>
 
 </html>
   <script src="https://cdn.jsdelivr.net/emojione/2.2.6/lib/js/emojione.min.js"></script>
@@ -87,7 +68,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
   <script>
-  let baseUrl = 'http://localhost:3000'
+let baseUrl = 'http://localhost:3000'
   new Vue({
     el: '#app',
     data: {
