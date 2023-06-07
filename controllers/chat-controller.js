@@ -1,6 +1,8 @@
 
 const { postUser, getUsers } = require('./users-controller');
+const { v4: uuidv4 } = require('uuid');
 let socketInfo;
+let messages = [];
 module.exports = async (io, socket) => {
  socketInfo = socket;
  let roomno = 1
@@ -16,11 +18,21 @@ module.exports = async (io, socket) => {
  io.in(`room-${roomno}`).emit('users', users)
 }
 
-module.exports.postMessage = async () => {
- 
+module.exports.postMessage = async (req) => {
+ // mock for persisting to db
+ let sendMessage = {}
+ sendMessage.id = uuidv4(),
+ sendMessage.timestamp = new Date().toISOString()
+ sendMessage.text = req.body.text
+ sendMessage.room = req.body.room
+ sendMessage.email = req.body.email
+ messages.push(sendMessage)
+ return { message: 'posted'}
 }
 
-module.exports.getMessages = async () => {
-
-
+module.exports.getMessages = async (req) => {
+ if(!req.params.room){
+    throw new Error('invalid request room is required')
+ }
+ return messages.filter(msg => msg.room === req.body.room) || []
 }
