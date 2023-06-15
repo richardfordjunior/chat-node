@@ -1,12 +1,110 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Chat Bot</title>
-  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/emojione/2.2.6/assets/css/emojione.min.css" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="importmap">
+    {
+    "imports": {
+      "vue": "https://unpkg.com/vue@3.3.4/dist/vue.esm-browser.js",
+      "vue/server-renderer": "https://unpkg.com/@vue/server-renderer@3.3.4/dist/server-renderer.esm-browser.js"
+    }
+  }
+  </script>
+</head>
+
+<script type="module">
+  import { createApp } from 'vue'
+  let baseUrl = 'http://localhost:3000'
+  const app = createApp({
+    data() {
+      return {
+        ws: null, //websocket
+        newMsg: '',
+        chatContent: '',
+        email: null,
+        id: null,
+        username: null,
+        joined: false,
+        image: null,
+        config: {},
+        room: null,
+        messages: ''
+      }
+    },
+    methods: {
+      join: function () {
+        if (!this.email) {
+          Materialize.toast('You must enter an email', 2000);
+          return
+        }
+        if (!this.username) {
+          Materialize.toast('You must choose a username', 2000);
+          return
+        }
+        this.email = $('<p>').html(this.email).text();
+        this.username = $('<p>').html(this.username).text();
+        this.joined = true;
+        this.config.email = this.email
+        this.config.name = this.username
+        let self = this
+        axios.post(`${baseUrl}/user`, this.config)
+          .then(function (res) {
+            if (Object.hasOwnProperty.call(res.data.data, 'id')) {
+              self.room = res.data.data.room
+              alert(`user joined room: ${self.room}`)
+            }
+          })
+          .catch(function (err) {
+            alert(err.message)
+          })
+      },
+      send: function () {
+        if (this.newMsg != '') {
+          // this.ws.send(
+          //   JSON.stringify({
+          //     email: this.email,
+          //     username: this.username,
+          //     message: $('<p>').html(this.newMsg).text(), // Strip out html
+          //     timestamp: new Date().toDateString()
+          //   }
+          //   ));
+          this.config.email = this.email
+          this.config.name = this.username
+          this.config.text = this.newMsg
+          let self = this
+          axios.post(`${baseUrl}/chat`, this.config)
+            .then(function (res) {
+              axios.get(`${baseUrl}/chat/${self.room}`)
+                .then(function (res) {
+                  self.messages = res.data.data
+                })
+                .catch(function (err) {
+                  alert(err.message)
+                })
+            })
+            .catch(function (err) {
+              alert(err.message)
+            })
+          if (document.getElementById('audio').paused) {
+            document.getElementById('audio').play();
+          }
+          else {
+            document.getElementById('audio').pause;
+          }
+          this.newMsg = ''; // Reset newMsg
+        }
+      }
+    }
+  }).mount('#app')
+</script>
 </head>
 <body>
   <header>
@@ -16,32 +114,7 @@
       </div>
     </nav>
   </header>
-  <main id="app">
-    <div class="row">
-      <div class="col s12">
-        <div class="card horizontal">
-          <div id="chat-messages" class="card-content" v-html="chatContent">
-
-          </div>
-        </div>
-      </div>
-      <audio id="audio" controls style="display: none;">
-        <source src="http://www.universal-soundbank.com/sounds/10835.mp3" type="audio/mpeg"> Your
-        browser does
-        not support the audio element.
-      </audio>
-    </div> 
-    <div class="row" v-if="joined">
-      <div class="input-field col s8">
-        <input type="text" v-model="newMsg" @keyup.enter="send">
-      </div>
-      <div class="input-field col s4">
-        <button class="waves-effect waves-light btn" @click.preventDefault();="send">
-          <i class="material-icons right">chat</i>
-          Send
-        </button>
-      </div>
-    </div>
+  <div id="app">
     <div class="row" v-if="!joined">
       <div class="input-field col s8">
         <input type="email" v-model.trim="email" placeholder="Email">
@@ -56,124 +129,19 @@
         </button>
       </div>
     </div>
+    <div v-if="joined" class="input-field col s4">
+      <input type="text" v-model="newMsg" @keyup.enter="send">
+      <button class="waves-effect waves-light btn" @click.preventDefault();="send">
+        <i class="material-icons right">chat</i>
+        Send
+      </button>
+    </div>
+    <div>
+      <ul v-for="msg in messages" :key="msg.id">
+      <li>{{msg.text}}</li>
+      </ul>
+    </div>
   </div>
-  </main>
-  <footer class="page-footer">
-  </footer>
+</body>
 
 </html>
-  <script src="https://cdn.jsdelivr.net/emojione/2.2.6/lib/js/emojione.min.js"></script>
-  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/md5.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.1/axios.min.js"></script>
-  <script>
-let baseUrl = 'http://localhost:3000'
-  new Vue({
-    el: '#app',
-    data: {
-      ws: null, //websocket
-      newMsg: '',
-      chatContent: '',
-      email: null,
-			id: null,
-      username: null,
-      joined: false,
-      image: null,
-			config: {},
-      room: "",
-      messages:""
-    },
-    created: function () {
-      var self = this;
-      this.ws = new WebSocket('wss://' + window.location.host + '/ws', ['appProtocol', 'appProtocol-v2']);
-      this.ws.addEventListener('message', function (e) {
-        var msg = JSON.parse(e.data);
-        self.chatContent += '<div class="chip">'
-          + '<img src="' + self.gravatarURL(msg.email) + '">' // Avatar
-          + msg.username
-          + '</div>'
-          + emojione.toImage(msg.message) + '<br/>'
-          + msg.timestamp
-          + '<br/>'; // Parse emojis
-  
-        var element = document.getElementById('chat-messages');
-        element.scrollTop = element.scrollHeight; // Auto scroll to the bottom
-      });
-    },
-    methods: {
-      send: function () {
-        if (this.newMsg != '') {
-          // this.ws.send(
-          //   JSON.stringify({
-          //     email: this.email,
-          //     username: this.username,
-          //     message: $('<p>').html(this.newMsg).text(), // Strip out html
-          //     timestamp: new Date().toDateString()
-          //   }
-          //   ));
-        this.config.email = this.email
-				this.config.name = this.username
-        this.config.text = this.newMsg
-        axios.post(`${baseUrl}/chat`, this.config)
-				.then(function(res) {
-          axios.get(`${baseUrl}/chat/${this.room}`)
-          .then(function(res) {
-            this.messages = res.data.data
-            alert(JSON.stringify(this.messages))
-
-          })
-          .catch(function(err) {
-            alert(err.message)
-          })
-        })
-				.catch(function(err) {
-					alert(err.message)
-				})
-          if (document.getElementById('audio').paused) {
-            document.getElementById('audio').play();
-          }
-          else {
-            document.getElementById('audio').pause;
-          }
-          this.newMsg = ''; // Reset newMsg
-        }
-      },
-      join: function () {
-        if (!this.email) {
-          Materialize.toast('You must enter an email', 2000);
-          return
-        }
-        if (!this.username) {
-          Materialize.toast('You must choose a username', 2000);
-          return
-        }
-        this.email = $('<p>').html(this.email).text();
-        this.username = $('<p>').html(this.username).text();
-        this.joined = true;
-				this.config.email = this.email
-				this.config.name = this.username
-				axios.post(`${baseUrl}/user`, this.config)
-				.then(function(res) {
-          if(Object.hasOwnProperty.call(res.data.data, 'id')){
-            this.room = res.data.data.room
-            alert(`user joined room: ${this.room}`)
-          }
-        })
-				.catch(function(err) {
-					alert(err.message)
-				})
-      },
-      gravatarURL: function (email) {
-        return 'http://www.gravatar.com/avatar/' + CryptoJS.MD5(email);
-      }
-    }
-  });
-  </script>
-  <style>
-    .data-table{
-      color: aqua;
-      margin-bottom: auto;
-    }
-  </style>
-</body>
