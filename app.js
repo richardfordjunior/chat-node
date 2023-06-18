@@ -27,9 +27,10 @@ app.route('/chat')
   .post(messagesRouter.postMessage)
 app.route('/user')
   .post(usersRouter.create)
-app.route('/user/:id')
+app.route('/users/:id')
   .get(usersRouter.listById)
-
+app.route('/users/')
+  .get(usersRouter.list)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
