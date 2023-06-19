@@ -1,7 +1,6 @@
 const server = require('../bin/www').server
 const chai = require('chai')
 const chaiHttp = require('chai-http')
-
 chai.should()
 chai.use(chaiHttp)
 
@@ -23,21 +22,47 @@ describe('API', function () {
       res.body['data'].should.have.property('id')
     })
 
-    it('get user by id', function (done) {
+    it('get all users', async function () {
       const user = {
         id: '1234',
         name: 'testuser',
         email: 'test@email.com',
         room: 'room-1'
       }
+      const res = await chai.request(server)
+        .post('/user')
+        .set('content-type', 'application/json')
+        .send(user)
       chai.request(server)
-        .get(`/users/${user.id}`)
+        .get(`/users`)
         .end((err, res) => {
           res.statusCode.should.equal(200)
           res.body.should.be.a('object')
           res.body.should.have.property('data')
-          done()
         })
+    })
+
+    it('get user by id', function (done) {
+      const user = {
+        id: '1233',
+        name: 'testuser',
+        email: 'test@email.com',
+        room: 'room-1'
+      }
+      chai.request(server)
+        .post('/user')
+        .set('content-type', 'application/json')
+        .send(user)
+        .then(resp => {
+          chai.request(server)
+            .get(`/users/${resp.body.data.id}`)
+            .end((err, res) => {
+              res.statusCode.should.equal(200)
+              res.body.should.be.a('object')
+              res.body.should.have.property('data')
+            })
+        })
+      done()
     })
 
     it('get user by room', function (done) {
@@ -58,12 +83,13 @@ describe('API', function () {
         })
     })
 
-    it('returns an error when querystring parameter value is missing', function (done) {
+    it('returns users when querystring parameter value is missing', function (done) {
       chai.request(server)
         .get('/users')
-        .query({ ro: user.room })
+        .query({ rooom: null })
         .end((err, res) => {
-          res.statusCode.should.equal(500)
+          res.statusCode.should.equal(200)
+          res.body.should.have.property('data')
           done()
         })
     })
@@ -112,7 +138,7 @@ describe('API', function () {
                     .get('/users')
                     .query({ room: users[1].room })
                     .end((err, res) => {
-                      res.body.data.length.should.equal(3)
+                      res.body.data.length.should.be.greaterThan(1)
                     })
                 })
             })

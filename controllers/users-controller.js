@@ -49,10 +49,10 @@ module.exports.postUser = async () => {
 }
 
 module.exports.getUsers = async (req) => {
-  if(!req.query['room']) {
-    throw new Error('req parameter is required')
+  let room;
+  if(req.query['room']){
+    room = req.query['room']
   }
-  let room = req.query['room']
   try {
     if(!room){
       return usersList
