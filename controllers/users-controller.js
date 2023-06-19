@@ -13,7 +13,7 @@ if(!validate(req.body)) {
   payload.id = uniqueId,
   payload.name = req.body.name,
   payload.email = req.body.email,
-  payload.room = 'room-1'
+  payload.room = req.body.room
   // persist user in memory
   save(payload)
  return payload; 
@@ -48,12 +48,17 @@ module.exports.postUser = async () => {
   }
 }
 
-module.exports.getUsers = async (room) => {
-  if(!room) {
-    throw new Error('room parameter is required')
+module.exports.getUsers = async (req) => {
+  let room;
+  if(req.query['room']){
+    room = req.query['room']
   }
   try {
-   return usersList.filter(val => val.room === room)
+    if(!room){
+      return usersList
+    } else if(room) {
+      return usersList.filter(val => val.room === room)
+    }
   } catch (err) {
     throw new Error(err);
   }

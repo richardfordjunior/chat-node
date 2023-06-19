@@ -21,4 +21,13 @@ async function listById (req, res){
   }
 }
 
-module.exports = { create, listById }
+async function list (req, res){
+  try {
+    user = await userController.getUsers(req);
+    res.status(200).json({ data: user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { create, listById, list }
